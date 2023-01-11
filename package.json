@@ -1,0 +1,36 @@
+{
+  "name": "js-ipfs-mfs-sync",
+  "version": "1.0.0",
+  "description": "Synchronize between MFS and the filesystem, pull or push",
+  "scripts": {
+    "test": "node test.js",
+    "lint": "standard --fix"
+  },
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RangerMauve/js-ipfs-mfs-sync.git"
+  },
+  "keywords": [
+    "ipfs",
+    "sync",
+    "folder",
+    "mfs"
+  ],
+  "author": "rangermauve <ranger@mauve.moe> (https://mauve.moe/)",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/RangerMauve/js-ipfs-mfs-sync/issues"
+  },
+  "homepage": "https://github.com/RangerMauve/js-ipfs-mfs-sync#readme",
+  "devDependencies": {
+    "delay": "^5.0.0",
+    "ipfs-core": "^0.17.0",
+    "ipfs-in-memory-repo": "^0.1.0",
+    "standard": "^17.0.0",
+    "tape": "^5.6.1"
+  },
+  "dependencies": {
+    "streamx": "^2.13.0"
+  }
+}
