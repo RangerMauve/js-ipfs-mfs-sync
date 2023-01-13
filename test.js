@@ -1,5 +1,6 @@
 import { createInMemoryIPFS } from 'ipfs-in-memory-repo'
 import test from 'tape'
+import delay from 'delay'
 
 import { diff, sync } from './sync.js'
 import { IPFSFS } from './ipfs-fs.js'
@@ -42,7 +43,9 @@ test('Diff two IPFS folders, IPFS-FS sanity check', async (t) => {
   t.ok(writeStream, 'Able to create write stream')
 
   await writeToStream(writeStream, Buffer.from(content))
-  await fs1.flush()
+
+  await delay(100)
+
   t.pass('Wrote to fs')
 
   const changes = await collect(diff(fs1, fs2))

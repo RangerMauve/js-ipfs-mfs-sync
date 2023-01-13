@@ -5,13 +5,21 @@ export const REMOVE = 'remove'
 export const ADD = 'add'
 export const CHANGE = 'change'
 
+async function noIgnore (change) {
+  return false
+}
+
 // Take either an FS-P
-export async function * sync (
-  fromFS,
-  toFS,
-  root = '/'
+export async function * sync (fromFS, toFS, {
+  root = '/',
+  noDelete = false,
+  ignore = noIgnore
+} = {}
 ) {
   for await (const change of diff(fromFS, toFS, root)) {
+    if (await ignore(change)) {
+      continue
+    }
     const fullPath = posix.join(root, change.path)
     if (change.op === ADD || change.op === CHANGE) {
       const file1 = await fromFS.open(fullPath, 'r')
@@ -34,6 +42,9 @@ export async function * sync (
 
       await file2.utimes(utime, mtime)
     } else if (change.op === REMOVE) {
+      if (noDelete) {
+        continue
+      }
       await toFS.rm(fullPath, { recursive: true, force: true })
 
       if (toFS.flush) {
