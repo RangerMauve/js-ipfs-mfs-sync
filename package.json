@@ -26,6 +26,7 @@
   "devDependencies": {
     "delay": "^5.0.0",
     "ipfs-core": "^0.18.0",
+    "ipfs-core-types": "^0.14.0",
     "ipfs-in-memory-repo": "^0.1.0",
     "standard": "^17.0.0",
     "tape": "^5.6.1"
