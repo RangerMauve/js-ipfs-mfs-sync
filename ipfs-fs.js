@@ -190,10 +190,14 @@ export class IPFSFileHandle {
   }
 
   async utimes (atime, mtime) {
-    await this.ipfs.files.touch(this.path, {
-      mtime,
-      flush: true
-    })
+    try {
+      await this.ipfs.files.touch(this.path, {
+        mtime,
+        flush: true
+      })
+    } catch {
+      // This will fail on Kubo, and only on Kubo
+    }
   }
 }
 
