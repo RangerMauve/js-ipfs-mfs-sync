@@ -1,6 +1,6 @@
 {
   "name": "ipfs-mfs-sync",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Synchronize between MFS and the filesystem, pull or push",
   "scripts": {
     "test": "node test.js",
