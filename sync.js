@@ -64,7 +64,6 @@ export async function * sync (fromFS, toFS, {
 // Yield either add, remove, change
 export async function * diff (fromFS, toFS, path = '/') {
   // Get entry at path
-
   const [fromStat, toStat] = await Promise.all([
     stat(fromFS, path),
     stat(toFS, path)
@@ -80,7 +79,10 @@ export async function * diff (fromFS, toFS, path = '/') {
     return
   }
   if (fromStat && !toStat) {
-    yield { op: ADD, path }
+    for await (const subpath of readDirRecursive(fromFS, path)) {
+      console.log({ path, subpath })
+      yield { op: ADD, path: subpath }
+    }
   }
   if (fromStat.isFile()) {
     if (!toStat.isFile()) {
@@ -117,11 +119,18 @@ export async function * diff (fromFS, toFS, path = '/') {
   // If in to, try to diff, perform diff
   for (const fromEntry of fromEntries) {
     const subPath = posix.join(path, fromEntry.name)
+
     if (hasEntry(toEntries, fromEntry)) {
       // Exists in both sides, do a diif on the subfolder
       yield * diff(fromFS, toFS, subPath)
     } else {
-      yield { op: ADD, path: subPath }
+      if (fromEntry.isDirectory()) {
+        for await (const subSubPath of readDirRecursive(fromFS, subPath)) {
+          yield { op: ADD, path: subSubPath }
+        }
+      } else {
+        yield { op: ADD, path: subPath }
+      }
     }
   }
 
@@ -141,6 +150,16 @@ function hasEntry (list, entry) {
 
 async function readDir (fs, folder) {
   return fs.readdir(folder, { withFileTypes: true })
+}
+
+async function * readDirRecursive (fs, folder) {
+  for (const entry of await readDir(fs, folder)) {
+    if (entry.isDirectory()) {
+      yield * await readDirRecursive(fs, posix.join(folder, entry.name))
+    } else {
+      yield posix.join(folder, entry.name)
+    }
+  }
 }
 
 async function stat (fs, path) {

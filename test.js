@@ -64,6 +64,7 @@ test('Diff two scoped filesystems', async (t) => {
   const changes = await collect(diff(fs1, fs2))
   const expectedChanges = [
     { op: 'add', path: '/example.txt' },
+    { op: 'add', path: '/subfolder/example.txt' },
     { op: 'remove', path: '/example2.txt' }
   ]
 
@@ -83,6 +84,7 @@ test('Diff between MFS and scoped fs', async (t) => {
   const changes = await collect(diff(fs1, fs2))
   const expectedChanges = [
     { op: 'add', path: '/example.txt' },
+    { op: 'add', path: '/subfolder/example.txt' },
     { op: 'remove', path: '/example2.txt' }
   ]
 
@@ -154,6 +156,7 @@ async function makeIPFSURLFromMap (files) {
   return url
 }
 
+/*
 async function makeIPNSURLFromMap (files, name) {
   const ipfsURL = await makeIPFSURLFromMap(files)
   const ipfsPath = ipfsURL.replace(IPFS_URL_PREFIX, '/ipfs/')
@@ -167,3 +170,4 @@ async function makeIPNSURLFromMap (files, name) {
 
   return `ipns://${id}/`
 }
+*/
