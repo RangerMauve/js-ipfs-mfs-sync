@@ -83,6 +83,7 @@ export async function * diff (fromFS, toFS, path = '/') {
       console.log({ path, subpath })
       yield { op: ADD, path: subpath }
     }
+    return
   }
   if (fromStat.isFile()) {
     if (!toStat.isFile()) {
@@ -92,6 +93,7 @@ export async function * diff (fromFS, toFS, path = '/') {
     if (fromStat.mtimeMs !== toStat.mtimeMs) {
       // TODO: Check the contents before doing a change?
       yield { op: CHANGE, path }
+      return
     } else {
       // Same!
       return
@@ -105,6 +107,7 @@ export async function * diff (fromFS, toFS, path = '/') {
     if (!toStat.isDirectory()) {
       yield { op: REMOVE, path }
       yield { op: ADD, path }
+      return
     }
   }
 
