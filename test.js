@@ -91,7 +91,7 @@ test('Diff between MFS and scoped fs', async (t) => {
   t.deepEqual(changes, expectedChanges, 'Got expected diff')
 })
 
-test.only('Sync from one mfs to another', async (t) => {
+test('Sync from one mfs to another', async (t) => {
   const folder1 = await next()
   const folder2 = await next()
 
