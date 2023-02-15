@@ -7,10 +7,14 @@ const IPFS_URL_PREFIX = 'ipfs://'
 const IPNS_URL_PREFIX = 'ipns://'
 const customInspectSymbol = Symbol.for('nodejs.util.inspect.custom')
 
+const DEFAULT_IPFS_OPTS = {
+  cidVersion: 1
+}
+
 // TODO: Add timeouts everywhere
 
 export class IPFSFS {
-  static async fromURL (ipfs, url, destination = null) {
+  static async fromURL (ipfs, url, destination = null, ipfsOpts = DEFAULT_IPFS_OPTS) {
     // Resolve URL and copy it to MFS
     if (url.startsWith(IPFS_URL_PREFIX)) {
       const rawPath = url.slice(IPFS_URL_PREFIX.length)
@@ -18,9 +22,9 @@ export class IPFSFS {
 
       const mfsPath = destination || posix.join(FS_ROOT, ipfsPath)
 
-      await copyFromPath(ipfs, ipfsPath, mfsPath)
+      await copyFromPath(ipfs, ipfsPath, mfsPath, ipfsOpts)
 
-      return new IPFSFS(ipfs, mfsPath)
+      return new IPFSFS(ipfs, mfsPath, ipfsOpts)
     } else if (url.startsWith(IPNS_URL_PREFIX)) {
       const rawPath = url.slice(IPNS_URL_PREFIX.length)
       const segments = rawPath.split('/')
@@ -38,23 +42,23 @@ export class IPFSFS {
 
       if (destination) {
         const fullIPFSPath = posix.join(ipfsPath, suffix)
-        await copyFromPath(ipfs, fullIPFSPath, destination)
-        return new IPFSFS(ipfs, destination)
+        await copyFromPath(ipfs, fullIPFSPath, destination, ipfsOpts)
+        return new IPFSFS(ipfs, destination, ipfsOpts)
       } else {
         const mfsPath = posix.join(FS_ROOT, ipnsPath)
 
-        await copyFromPath(ipfs, ipfsPath, mfsPath)
+        await copyFromPath(ipfs, ipfsPath, mfsPath, ipfsOpts)
 
         const mfsFullPath = posix.join(mfsPath, suffix)
 
-        return new IPFSFS(ipfs, mfsFullPath)
+        return new IPFSFS(ipfs, mfsFullPath, ipfsOpts)
       }
     } else {
       throw new Error(`Must supply ipfs:// or ipns:// URL, got ${url}`)
     }
   }
 
-  constructor (ipfs, root) {
+  constructor (ipfs, root = '/', ipfsOpts = DEFAULT_IPFS_OPTS) {
     this.ipfs = ipfs
     this.root = root
   }
@@ -107,7 +111,7 @@ export class IPFSFS {
   async mkdir (path) {
     const fullPath = this.#resolve(path)
     await this.ipfs.files.mkdir(fullPath, {
-      flush: true
+      ...this.ipfsOpts
     })
   }
 
@@ -121,7 +125,7 @@ export class IPFSFS {
     const fullPath = this.#resolve(path)
     await this.ipfs.files.rm(fullPath, {
       recursive: true,
-      flush: true
+      ...this.ipfsOpts
     })
   }
 }
@@ -142,6 +146,10 @@ export class IPFSStat {
 
   get mtime () {
     return this.#stat.mtime
+  }
+
+  get mtimeMs () {
+    return this.#stat.mtime?.secs
   }
 
   get utime () {
@@ -166,9 +174,10 @@ export class IPFSStat {
 }
 
 export class IPFSFileHandle {
-  constructor (ipfs, path) {
+  constructor (ipfs, path = '/', ipfsOpts = DEFAULT_IPFS_OPTS) {
     this.ipfs = ipfs
     this.path = path
+    this.ipfsOpts = ipfsOpts
   }
 
   createReadStream (options) {
@@ -184,7 +193,7 @@ export class IPFSFileHandle {
       parents: true,
       truncate: true,
       rawLeaves: true,
-      flush: true
+      ...this.ipfsOpts
     })
     return transform
   }
@@ -193,7 +202,7 @@ export class IPFSFileHandle {
     try {
       await this.ipfs.files.touch(this.path, {
         mtime,
-        flush: true
+        ...this.ipfsOpts
       })
     } catch {
       // This will fail on Kubo, and only on Kubo
@@ -209,14 +218,14 @@ async function collect (iterator) {
   return items
 }
 
-async function copyFromPath (ipfs, ipfsPath, destinationFolder) {
+async function copyFromPath (ipfs, ipfsPath, destinationFolder, ipfsOpts = DEFAULT_IPFS_OPTS) {
   const items = ipfs.ls(ipfsPath)
   for await (const { name } of items) {
     const fullIPFSPath = posix.join(ipfsPath, name)
     const fullMFSPath = posix.join(destinationFolder, name)
     await ipfs.files.cp(fullIPFSPath, fullMFSPath, {
       parents: true,
-      flush: true
+      ...ipfsOpts
     })
   }
 }

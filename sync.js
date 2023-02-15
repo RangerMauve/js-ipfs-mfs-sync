@@ -1,5 +1,6 @@
 import { posix } from 'path'
 import { pipelinePromise } from 'streamx'
+import streamEquals from 'binary-stream-equals'
 
 export const REMOVE = 'remove'
 export const ADD = 'add'
@@ -30,9 +31,6 @@ export async function * sync (fromFS, toFS, {
         file2.createWriteStream()
       )
 
-      if (toFS.flush) {
-        await toFS.flush()
-      }
       const { mtime, utime } = await fromFS.stat(fullPath)
 
       let time = mtime || utime
@@ -46,10 +44,6 @@ export async function * sync (fromFS, toFS, {
         continue
       }
       await toFS.rm(fullPath, { recursive: true, force: true })
-
-      if (toFS.flush) {
-        await toFS.flush()
-      }
     } else {
       throw new Error(`Unknown Operation ${change.op} at ${change.path}`)
     }
@@ -80,24 +74,28 @@ export async function * diff (fromFS, toFS, path = '/') {
   }
   if (fromStat && !toStat) {
     for await (const subpath of readDirRecursive(fromFS, path)) {
-      console.log({ path, subpath })
       yield { op: ADD, path: subpath }
     }
     return
   }
   if (fromStat.isFile()) {
     if (!toStat.isFile()) {
-      throw new Error(`Can only diff files and directories. At ${path}`)
+      yield { op: REMOVE, path }
+      yield { op: ADD, path }
+      return
     }
 
-    if (fromStat.mtimeMs !== toStat.mtimeMs) {
+    if (!fromStat.mtimeMs || !toStat.mtimeMs) {
+      if (fromStat.size !== toStat.size || !await compareContents(fromFS, toFS, path)) {
+        yield { op: CHANGE, path }
+      }
       // TODO: Check the contents before doing a change?
-      yield { op: CHANGE, path }
-      return
-    } else {
-      // Same!
-      return
+    } else if (fromStat.mtimeMs !== toStat.mtimeMs) {
+      if (!await compareContents(fromFS, toFS, path)) {
+        yield { op: CHANGE, path }
+      }
     }
+    return
   }
   if (!fromStat.isDirectory()) {
     throw new Error(`Can only diff files and directories. At ${path}`)
@@ -171,4 +169,14 @@ async function stat (fs, path) {
   } catch {
     return null
   }
+}
+
+async function compareContents (fromFS, toFS, path) {
+  const file1 = await fromFS.open(path, 'r')
+  const file2 = await toFS.open(path, 'r')
+
+  return streamEquals(
+    file1.createReadStream(),
+    file2.createReadStream()
+  )
 }

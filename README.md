@@ -1,5 +1,6 @@
 # js-ipfs-mfs-sync
-Synchronize between MFS and the filesystem, pull or push
+
+Synchronize between MFS and the filesystem, pull or push.
 
 ```javascript
 import MFSSync from 'ipfs-mfs-sync'
@@ -15,3 +16,4 @@ for(const {op, path} of sync.fromFSToMFS('./example', '/mfs-folder')) {
   }
 }
 ```
+

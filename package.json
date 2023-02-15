@@ -32,6 +32,7 @@
     "tape": "^5.6.1"
   },
   "dependencies": {
+    "binary-stream-equals": "^1.0.0",
     "streamx": "^2.13.2"
   }
 }

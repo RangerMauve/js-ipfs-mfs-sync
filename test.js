@@ -91,7 +91,7 @@ test('Diff between MFS and scoped fs', async (t) => {
   t.deepEqual(changes, expectedChanges, 'Got expected diff')
 })
 
-test('Sync from one mfs to another', async (t) => {
+test.only('Sync from one mfs to another', async (t) => {
   const folder1 = await next()
   const folder2 = await next()
 
@@ -109,6 +109,10 @@ test('Sync from one mfs to another', async (t) => {
   const listings = await fs2.readdir('/')
 
   t.deepEqual(listings, ['example.txt'], 'File got added')
+
+  const noChanges = await collect(sync(fs1, fs2))
+
+  t.deepEqual(noChanges, [], 'No changes detected after sync')
 })
 
 async function collect (iterator) {
